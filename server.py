@@ -179,6 +179,10 @@ class DiceRoller:
         ones = random.randint(0, 9)
         result = tens + ones
         
+        # Handle 00 as 100 for proper d100 (1-100 range)
+        if result == 0:
+            result = 100
+        
         return {
             "tens": tens,
             "ones": ones,
@@ -412,6 +416,11 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
     try:
         if name == "flip_coin":
             num_flips = arguments.get("num_flips", 1)
+            
+            # Validate num_flips
+            if not isinstance(num_flips, int) or num_flips < 1 or num_flips > 100:
+                raise ValueError("num_flips must be an integer between 1 and 100")
+            
             if num_flips == 1:
                 result = "Heads" if random.random() < 0.5 else "Tails"
                 dice_roller.add_to_history("coin_flip", result)
@@ -447,6 +456,18 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
             die_type = arguments["die_type"]
             num_dice = arguments.get("num_dice", 1)
             modifier = arguments.get("modifier", 0)
+            
+            # Validate die_type
+            valid_die_types = ["d4", "d6", "d8", "d10", "d12", "d20", "d100"]
+            if die_type not in valid_die_types:
+                raise ValueError(f"die_type must be one of: {', '.join(valid_die_types)}")
+            
+            # Validate num_dice and modifier
+            if not isinstance(num_dice, int) or num_dice < 1 or num_dice > 100:
+                raise ValueError("num_dice must be an integer between 1 and 100")
+            if not isinstance(modifier, int) or abs(modifier) > 1000:
+                raise ValueError("modifier must be an integer between -1000 and 1000")
+            
             die_size = int(die_type[1:])  # Remove 'd' prefix
             
             result = dice_roller.roll_dice(num_dice, die_size, modifier)
@@ -464,6 +485,13 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
         elif name == "roll_advantage":
             die_size = arguments.get("die_size", 20)
             modifier = arguments.get("modifier", 0)
+            
+            # Validate parameters
+            if not isinstance(die_size, int) or die_size < 2 or die_size > 1000:
+                raise ValueError("die_size must be an integer between 2 and 1000")
+            if not isinstance(modifier, int) or abs(modifier) > 1000:
+                raise ValueError("modifier must be an integer between -1000 and 1000")
+            
             result = dice_roller.roll_with_advantage(die_size, modifier)
             dice_roller.add_to_history("advantage_roll", result)
             
@@ -479,6 +507,12 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
         elif name == "roll_disadvantage":
             die_size = arguments.get("die_size", 20)
             modifier = arguments.get("modifier", 0)
+            
+            # Validate parameters
+            if not isinstance(die_size, int) or die_size < 2 or die_size > 1000:
+                raise ValueError("die_size must be an integer between 2 and 1000")
+            if not isinstance(modifier, int) or abs(modifier) > 1000:
+                raise ValueError("modifier must be an integer between -1000 and 1000")
             result = dice_roller.roll_with_disadvantage(die_size, modifier)
             dice_roller.add_to_history("disadvantage_roll", result)
             
@@ -492,9 +526,18 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
             return [TextContent(type="text", text=response)]
         
         elif name == "roll_exploding":
-            num_dice = arguments.get("num_dice", 1)
+            num_dice = arguments.get("num_dice", 1)  
             die_size = arguments["die_size"]
             modifier = arguments.get("modifier", 0)
+            
+            # Validate parameters
+            if not isinstance(num_dice, int) or num_dice < 1 or num_dice > 100:
+                raise ValueError("num_dice must be an integer between 1 and 100")
+            if not isinstance(die_size, int) or die_size < 2 or die_size > 1000:
+                raise ValueError("die_size must be an integer between 2 and 1000")
+            if not isinstance(modifier, int) or abs(modifier) > 1000:
+                raise ValueError("modifier must be an integer between -1000 and 1000")
+            
             result = dice_roller.roll_exploding_dice(num_dice, die_size, modifier)
             dice_roller.add_to_history("exploding_roll", result)
             
@@ -526,6 +569,11 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
         
         elif name == "roll_fudge":
             num_dice = arguments.get("num_dice", 4)
+            
+            # Validate parameters
+            if not isinstance(num_dice, int) or num_dice < 1 or num_dice > 100:
+                raise ValueError("num_dice must be an integer between 1 and 100")
+            
             result = dice_roller.roll_fudge_dice(num_dice)
             dice_roller.add_to_history("fudge_roll", result)
             
@@ -538,6 +586,11 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
         
         elif name == "get_history":
             limit = arguments.get("limit", 10)
+            
+            # Validate parameters
+            if not isinstance(limit, int) or limit < 1 or limit > 100:
+                raise ValueError("limit must be an integer between 1 and 100")
+            
             if not dice_roller.roll_history:
                 return [TextContent(type="text", text="📜 No roll history available.")]
             
@@ -562,7 +615,6 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
         elif name == "clear_history":
             dice_roller.roll_history = []
             dice_roller.save_history()
-            dice_roller.add_to_history("history_cleared", "History was cleared")
             return [TextContent(type="text", text="🗑️ Roll history has been cleared.")]
         
         else:
