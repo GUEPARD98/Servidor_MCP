@@ -9,8 +9,12 @@ Un servidor MCP simple y limpio para tiradas de dados, lanzamiento de monedas y 
 - **🎮 Dados estándar de juegos** - d4, d6, d8, d10, d12, d20, d100
 - **⚔️ Ventaja/Desventaja** - Mecánica de D&D 5e (tirar dos veces, quedarse con el mayor/menor)
 - **💥 Dados explosivos** - Los dados que sacan el valor máximo se vuelven a tirar
+- **🎯 Dados percentil** - Dado d100 tradicional (1-100)
+- **🎲 Dados Fudge** - Dados especiales que dan -1, 0, o +1
 - **📜 Historial de tiradas** - Mantiene registro de las últimas 100 tiradas
 - **🧹 Gestión de historial** - Ver y limpiar el historial de tiradas
+- **✅ Validación robusta** - Validación completa de todos los parámetros de entrada
+- **🛡️ Manejo de errores** - Mensajes de error claros y descriptivos
 
 ## 📦 Instalación
 
@@ -84,12 +88,20 @@ Tira dados explosivos - vuelve a tirar cuando sale el valor máximo.
   - `num_dice` (opcional): Número de dados (1-100, por defecto: 1)
   - `modifier` (opcional): Modificador a agregar (-1000 a 1000, por defecto: 0)
 
-### 7. `get_history`
+### 8. `roll_percentile`
+Tira un dado percentil (d100).
+
+### 9. `roll_fudge`
+Tira dados Fudge (dF) - cada dado puede dar -1, 0, o +1.
+- **Parámetros:**
+  - `num_dice` (opcional): Número de dados Fudge (1-100, por defecto: 4)
+
+### 10. `get_history`
 Obtiene el historial de tiradas recientes.
 - **Parámetros:**
   - `limit` (opcional): Número de tiradas recientes a mostrar (1-100, por defecto: 10)
 
-### 8. `clear_history`
+### 11. `clear_history`
 Limpia el historial de tiradas.
 
 ## 📝 Ejemplos de Uso
@@ -102,6 +114,8 @@ Limpia el historial de tiradas.
 ### Tiradas Avanzadas
 - "Tira con ventaja" → `roll_advantage()`
 - "Tira 3d6 explosivos" → `roll_exploding(num_dice=3, die_size=6)`
+- "Tira percentil" → `roll_percentile()`
+- "Tira 4 dados Fudge" → `roll_fudge(num_dice=4)`
 - "Muestra las últimas 5 tiradas" → `get_history(limit=5)`
 
 ## 🎮 Notación de Dados

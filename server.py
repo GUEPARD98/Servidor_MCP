@@ -18,15 +18,16 @@ from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent, ErrorData
 
 # Configure logging
+log_level = os.getenv("DICE_ROLLER_LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
-    level=logging.DEBUG,  # Changed to DEBUG for more detailed logging
+    level=getattr(logging, log_level, logging.INFO),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger("dice-roller")
 
 # Configuration
 MAX_HISTORY = 100
-HISTORY_FILE = "dice_history.json"
+HISTORY_FILE = os.getenv("HISTORY_FILE", "dice_history.json")
 
 class DiceRoller:
     def __init__(self, max_history: int = MAX_HISTORY, history_file: str = HISTORY_FILE):
@@ -39,19 +40,25 @@ class DiceRoller:
         """Load roll history from file if it exists"""
         if os.path.exists(self.history_file):
             try:
-                with open(self.history_file, 'r') as f:
-                    self.roll_history = json.load(f)
-                logger.info(f"Loaded {len(self.roll_history)} history entries")
-            except Exception as e:
+                with open(self.history_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    # Validate that data is a list
+                    if isinstance(data, list):
+                        self.roll_history = data
+                        logger.info(f"Loaded {len(self.roll_history)} history entries")
+                    else:
+                        logger.warning(f"Invalid history file format, starting with empty history")
+                        self.roll_history = []
+            except (json.JSONDecodeError, IOError) as e:
                 logger.error(f"Failed to load history: {e}")
                 self.roll_history = []
     
     def save_history(self) -> None:
         """Save roll history to file"""
         try:
-            with open(self.history_file, 'w') as f:
-                json.dump(self.roll_history, f)
-        except Exception as e:
+            with open(self.history_file, 'w', encoding='utf-8') as f:
+                json.dump(self.roll_history, f, indent=2, ensure_ascii=False)
+        except (IOError, OSError) as e:
             logger.error(f"Failed to save history: {e}")
     
     def add_to_history(self, roll_type: str, result: Any) -> None:
@@ -148,16 +155,19 @@ class DiceRoller:
         """Roll exploding dice (reroll on max value)"""
         all_rolls = []
         final_rolls = []
+        MAX_EXPLOSIONS = 100  # Safety limit to prevent infinite loops
         
         for _ in range(num_dice):
             die_rolls = []
             roll = random.randint(1, die_size)
             die_rolls.append(roll)
+            explosions = 0
             
-            # Keep rolling while we get max value
-            while roll == die_size:
+            # Keep rolling while we get max value (with safety limit)
+            while roll == die_size and explosions < MAX_EXPLOSIONS:
                 roll = random.randint(1, die_size)
                 die_rolls.append(roll)
+                explosions += 1
             
             all_rolls.append(die_rolls)
             final_rolls.append(sum(die_rolls))
