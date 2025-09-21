@@ -589,16 +589,12 @@ async def main():
         # Run the server using stdio transport
         async with stdio_server() as (read_stream, write_stream):
             logger.debug("Server streams created")
-            server_task = asyncio.create_task(app.run(
+            await app.run(
                 read_stream,
                 write_stream,
                 app.create_initialization_options()
-            ))
-            logger.debug("Server task created")
-            
-            # Keep the main coroutine alive
-            while True:
-                await asyncio.sleep(3600)
+            )
+            logger.debug("Server completed")
 
     except Exception as e:
         logger.error(f"Fatal error: {e}")
